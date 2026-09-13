@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elering Price Watch — Baltic Electricity Prices</title>
+    <meta name="description" content="Live Nord Pool day-ahead electricity prices for Estonian and Baltic households. Find the cheapest hours to run your EV charger or washing machine.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-dark:      #0d1117;
+            --bg-card:      #161b22;
+            --bg-card-alt:  #1c2333;
+            --border:       #30363d;
+            --text-primary: #e6edf3;
+            --text-muted:   #8b949e;
+            --accent-blue:  #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange:#d29922;
+            --accent-red:   #f85149;
+            --accent-purple:#bc8cff;
+            --chart-today:  rgba(88, 166, 255, 0.8);
+            --chart-tmrw:   rgba(63, 185, 80, 0.8);
+            --chart-cheap:  rgba(255, 215, 0, 0.15);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'Inter', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-icon { font-size: 1.6rem; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(88,166,255,0.12);
+            color: var(--accent-blue);
+            border: 1px solid rgba(88,166,255,0.25);
+        }
+
+        /* ── Controls ── */
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+
+        .control-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.45rem 0.75rem;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:hover, select:focus { border-color: var(--accent-blue); outline: none; }
+
+        /* ── Main layout ── */
+        main { padding: 1.5rem 2rem 3rem; max-width: 1400px; margin: 0 auto; }
+
+        /* ── Stats cards ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.1rem 1.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .stat-card:hover { transform: translateY(-2px); border-color: var(--accent-blue); }
+
+        .stat-card .label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-card .unit {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        .value.green  { color: var(--accent-green); }
+        .value.red    { color: var(--accent-red); }
+        .value.orange { color: var(--accent-orange); }
+        .value.blue   { color: var(--accent-blue); }
+
+        /* ── Chart card ── */
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .chart-container { position: relative; height: 340px; }
+
+        /* ── Cheapest hours table ── */
+        .cheapest-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .cheapest-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .cheapest-title { font-size: 1rem; font-weight: 600; }
+
+        .hours-select-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .cheapest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.6rem;
+        }
+
+        .hour-pill {
+            background: var(--bg-card-alt);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem 0.75rem;
+            text-align: center;
+            transition: transform 0.15s;
+        }
+
+        .hour-pill:hover { transform: scale(1.03); }
+
+        .hour-pill.highlight {
+            border-color: rgba(255, 215, 0, 0.5);
+            background: rgba(255, 215, 0, 0.07);
+        }
+
+        .hour-pill .hour-label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .hour-pill .hour-price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+
+        .hour-pill .hour-vat {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+        }
+
+        /* ── Status/loading ── */
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.4; }
+        }
+
+        .loading { opacity: 0.5; }
+        .error-msg { color: var(--accent-red); font-size: 0.85rem; margin: 1rem 0; }
+
+        /* ── API docs link ── */
+        .api-link {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .api-link a { color: var(--accent-blue); text-decoration: none; }
+        .api-link a:hover { text-decoration: underline; }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            header, main { padding-left: 1rem; padding-right: 1rem; }
+            .chart-container { height: 250px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <div>
+            <div>Elering Price Watch</div>
+            <div style="font-size:0.7rem;font-weight:400;color:var(--text-muted);">Baltic Nord Pool Electricity Prices</div>
+        </div>
+    </div>
+    <div class="controls">
+        <div class="control-group">
+            <label for="zone-select">Zone</label>
+            <select id="zone-select">
+                <option value="EE" selected>🇪🇪 Estonia (EE)</option>
+                <option value="FI">🇫🇮 Finland (FI)</option>
+                <option value="LV">🇱🇻 Latvia (LV)</option>
+                <option value="LT">🇱🇹 Lithuania (LT)</option>
+            </select>
+        </div>
+        <span class="badge" id="last-updated-badge">⟳ Loading…</span>
+    </div>
+</header>
+
+<main>
+    <div class="status-bar">
+        <div class="status-dot"></div>
+        <span id="status-text">Fetching live prices…</span>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label">Current Hour</div>
+            <div class="value blue" id="stat-current">—</div>
+            <div class="unit">EUR/MWh</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Today Min</div>
+            <div class="value green" id="stat-min">—</div>
+            <div class="unit">EUR/MWh</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Today Max</div>
+            <div class="value red" id="stat-max">—</div>
+            <div class="unit">EUR/MWh</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Today Avg</div>
+            <div class="value orange" id="stat-avg">—</div>
+            <div class="unit">EUR/MWh</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Consumer Price Now</div>
+            <div class="value blue" id="stat-consumer">—</div>
+            <div class="unit">EUR/kWh incl. VAT</div>
+        </div>
+    </div>
+
+    <!-- Price chart -->
+    <div class="chart-card">
+        <div class="chart-header">
+            <div class="chart-title">📊 Hourly Price Curve</div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#58a6ff;"></div>
+                    <span>Today</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:#3fb950;"></div>
+                    <span>Tomorrow</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot" style="background:rgba(255,215,0,0.6);width:14px;height:14px;border-radius:3px;"></div>
+                    <span>Cheapest 3h window</span>
+                </div>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Cheapest hours -->
+    <div class="cheapest-card">
+        <div class="cheapest-header">
+            <div class="cheapest-title">🏆 Cheapest Hours (Best time to run appliances)</div>
+            <div class="hours-select-group">
+                <span>Show top</span>
+                <select id="cheapest-n" style="padding:0.3rem 0.5rem;">
+                    <option value="3" selected>3 hours</option>
+                    <option value="5">5 hours</option>
+                    <option value="8">8 hours</option>
+                </select>
+            </div>
+        </div>
+        <div id="error-msg" class="error-msg" style="display:none;"></div>
+        <div class="cheapest-grid" id="cheapest-grid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <div class="api-link">
+        Powered by <a href="https://dashboard.elering.ee/api" target="_blank">Elering API</a> ·
+        <a href="/swagger-ui.html" target="_blank">API Documentation</a> ·
+        <a href="/actuator/health" target="_blank">Health</a>
+    </div>
+</main>
+
+<script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let chart = null;
+    let todayPrices = [];
+    let tomorrowPrices = [];
+    let cheapestHours = [];
+
+    const zoneSelect = document.getElementById('zone-select');
+    const cheapestNSelect = document.getElementById('cheapest-n');
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    async function init() {
+        await loadAll();
+        zoneSelect.addEventListener('change', loadAll);
+        cheapestNSelect.addEventListener('change', loadCheapest);
+    }
+
+    async function loadAll() {
+        const zone = zoneSelect.value;
+        setStatus(`Loading prices for zone ${zone}…`);
+
+        await Promise.allSettled([
+            loadToday(zone),
+            loadTomorrow(zone),
+        ]);
+
+        await loadCheapest();
+        renderChart();
+        updateLastUpdated();
+        setStatus(`Zone ${zone} · ${todayPrices.length} hours loaded`);
+    }
+
+    // ── API calls ──────────────────────────────────────────────────────────────
+    async function loadToday(zone) {
+        try {
+            const res = await fetch(`/api/prices/today?zone=${zone}`);
+            if (!res.ok) { todayPrices = []; return; }
+            todayPrices = await res.json();
+            updateStats();
+        } catch (e) { todayPrices = []; }
+    }
+
+    async function loadTomorrow(zone) {
+        try {
+            const res = await fetch(`/api/prices/tomorrow?zone=${zone}`);
+            if (!res.ok) { tomorrowPrices = []; return; }
+            tomorrowPrices = await res.json();
+        } catch (e) { tomorrowPrices = []; }
+    }
+
+    async function loadCheapest() {
+        const zone = zoneSelect.value;
+        const n = cheapestNSelect.value;
+        try {
+            const res = await fetch(`/api/prices/cheapest?zone=${zone}&hours=${n}&contiguous=false`);
+            const errorEl = document.getElementById('error-msg');
+            if (!res.ok) {
+                cheapestHours = [];
+                errorEl.style.display = 'block';
+                errorEl.textContent = 'No cheapest hours data available for today.';
+                renderCheapest([]);
+                return;
+            }
+            errorEl.style.display = 'none';
+            const data = await res.json();
+            cheapestHours = data.hours || [];
+            renderCheapest(cheapestHours);
+        } catch (e) { renderCheapest([]); }
+    }
+
+    // ── Stats ──────────────────────────────────────────────────────────────────
+    function updateStats() {
+        if (!todayPrices.length) return;
+
+        const prices = todayPrices.map(p => p.priceEurMwh);
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+        // Find current hour price
+        const now = new Date();
+        const currentPrice = todayPrices.find(p => {
+            const hourStart = new Date(p.hourStart);
+            const hourEnd = new Date(hourStart.getTime() + 3600000);
+            return now >= hourStart && now < hourEnd;
+        });
+
+        setText('stat-min', min.toFixed(2));
+        setText('stat-max', max.toFixed(2));
+        setText('stat-avg', avg.toFixed(2));
+        if (currentPrice) {
+            setText('stat-current', currentPrice.priceEurMwh.toFixed(2));
+            setText('stat-consumer', (currentPrice.priceWithVat || 0).toFixed(4));
+        }
+    }
+
+    // ── Chart ──────────────────────────────────────────────────────────────────
+    function renderChart() {
+        const labels = todayPrices.map(p => p.localHourLabel || formatHour(p.hourStart));
+        const todayData = todayPrices.map(p => p.priceEurMwh);
+        const tomorrowData = tomorrowPrices.length
+            ? tomorrowPrices.map(p => p.priceEurMwh)
+            : null;
+
+        const cheapestStartTimes = new Set(cheapestHours.map(h => h.hourStart));
+
+        const backgroundColors = todayData.map((_, i) => {
+            const label = todayPrices[i]?.hourStart;
+            return cheapestStartTimes.has(label)
+                ? 'rgba(255,215,0,0.20)'
+                : 'rgba(88,166,255,0.08)';
+        });
+
+        if (chart) { chart.destroy(); }
+
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Today (EUR/MWh)',
+                        data: todayData,
+                        backgroundColor: backgroundColors,
+                        borderColor: 'rgba(88,166,255,0.9)',
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        order: 2,
+                    },
+                    ...(tomorrowData ? [{
+                        label: 'Tomorrow (EUR/MWh)',
+                        data: tomorrowData,
+                        type: 'line',
+                        borderColor: 'rgba(63,185,80,0.8)',
+                        backgroundColor: 'rgba(63,185,80,0.05)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        tension: 0.35,
+                        fill: true,
+                        order: 1,
+                    }] : []),
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: '#1c2333',
+                        borderColor: '#30363d',
+                        borderWidth: 1,
+                        titleColor: '#e6edf3',
+                        bodyColor: '#8b949e',
+                        callbacks: {
+                            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} EUR/MWh`,
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(48,54,61,0.5)' },
+                        ticks: { color: '#8b949e', font: { size: 10 }, maxRotation: 45 },
+                    },
+                    y: {
+                        grid: { color: 'rgba(48,54,61,0.5)' },
+                        ticks: {
+                            color: '#8b949e',
+                            font: { size: 11 },
+                            callback: v => v.toFixed(0) + ' €',
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Cheapest grid ──────────────────────────────────────────────────────────
+    function renderCheapest(hours) {
+        const grid = document.getElementById('cheapest-grid');
+        if (!hours.length) {
+            grid.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">No data available.</p>';
+            return;
+        }
+        const cheapestSet = new Set(hours.map(h => h.hourStart));
+        const allToday = [...todayPrices].sort((a, b) => a.priceEurMwh - b.priceEurMwh);
+
+        grid.innerHTML = hours
+            .sort((a, b) => new Date(a.hourStart) - new Date(b.hourStart))
+            .map(h => `
+                <div class="hour-pill highlight">
+                    <div class="hour-label">${h.localHourLabel || formatHour(h.hourStart)}</div>
+                    <div class="hour-price">${h.priceEurMwh.toFixed(1)}</div>
+                    <div class="hour-vat">${(h.priceWithVat || 0).toFixed(4)} €/kWh</div>
+                </div>
+            `).join('');
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function setStatus(msg) { document.getElementById('status-text').textContent = msg; }
+    function setText(id, val) { document.getElementById(id).textContent = val; }
+
+    function updateLastUpdated() {
+        const badge = document.getElementById('last-updated-badge');
+        badge.textContent = '✓ Updated ' + new Date().toLocaleTimeString('et-EE');
+    }
+
+    function formatHour(isoString) {
+        try {
+            const d = new Date(isoString);
+            return d.toLocaleTimeString('et-EE', {
+                hour: '2-digit', minute: '2-digit',
+                timeZone: 'Europe/Tallinn'
+            });
+        } catch { return isoString; }
+    }
+
+    // ── Start ──────────────────────────────────────────────────────────────────
+    init();
+
+    // Auto-refresh every 5 minutes
+    setInterval(loadAll, 5 * 60 * 1000);
+</script>
+
+</body>
+</html>
