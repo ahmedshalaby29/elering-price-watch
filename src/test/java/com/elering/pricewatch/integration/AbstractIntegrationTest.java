@@ -6,8 +6,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
  * Base class for integration tests that require a real PostgreSQL instance.
@@ -21,15 +19,16 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("pricewatch_test")
             .withUsername("test")
-            .withPassword("test")
-            .withReuse(true);
+            .withPassword("test");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
