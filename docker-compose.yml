@@ -1,0 +1,79 @@
+services:
+
+  # ─── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: pricewatch-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pricewatch
+      POSTGRES_USER: pricewatch
+      POSTGRES_PASSWORD: pricewatch
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pricewatch -d pricewatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── Elering Price Watch App ─────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pricewatch-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pricewatch
+      SPRING_DATASOURCE_USERNAME: pricewatch
+      SPRING_DATASOURCE_PASSWORD: pricewatch
+
+      # Schedule: 14:00 EET = 11:00 UTC
+      PRICE_FETCH_CRON: "0 0 11 * * *"
+      # Zones to fetch (comma-separated)
+      SCHEDULING_ZONES: EE,FI,LV,LT
+
+      # Elering API settings
+      ELERING_API_BASE_URL: https://dashboard.elering.ee/api
+      ELERING_TIMEOUT_SECONDS: "10"
+      ELERING_RETRY_MAX_ATTEMPTS: "3"
+
+      # ── Email notifications (optional) ──────────────────────────────────────
+      # Set NOTIFICATIONS_EMAIL_ENABLED=true and configure MAIL_* to enable
+      NOTIFICATIONS_EMAIL_ENABLED: "false"
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: "587"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_FROM: noreply@elering-price-watch.local
+
+      # ── Webhook notifications (enabled by default, no extra config needed) ──
+      NOTIFICATIONS_WEBHOOK_ENABLED: "true"
+
+      # ── Telegram notifications (optional) ───────────────────────────────────
+      # Set NOTIFICATIONS_TELEGRAM_ENABLED=true and set TELEGRAM_BOT_TOKEN
+      NOTIFICATIONS_TELEGRAM_ENABLED: "false"
+      TELEGRAM_BOT_TOKEN: ""
+
+      # Actuator / JVM
+      SERVER_PORT: "8080"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  pgdata:
+    name: pricewatch-pgdata
