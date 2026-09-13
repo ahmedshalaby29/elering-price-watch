@@ -1,6 +1,5 @@
 package com.elering.pricewatch.controller;
 
-import com.elering.pricewatch.domain.enums.Zone;
 import com.elering.pricewatch.service.PriceFetchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

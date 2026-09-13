@@ -49,7 +49,7 @@ public class AppConfig {
     public RestClient notificationRestClient(
             @Value("${notifications.webhook.connect-timeout-ms}") long connectMs,
             @Value("${notifications.webhook.read-timeout-ms}") long readMs) {
-        
+
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofMillis(connectMs));
         factory.setReadTimeout(Duration.ofMillis(readMs));

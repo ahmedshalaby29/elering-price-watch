@@ -71,13 +71,13 @@ public class PriceController {
             summary = "Cheapest N hours",
             description = """
                     Finds the N cheapest hours for the given zone and date.
-                    
+
                     Two modes:
                     - **contiguous=false** (default): picks the N individually cheapest hours.
                       Ideal for flexible loads (EV charging, water heater) that can be split.
                     - **contiguous=true**: sliding-window algorithm finds the cheapest consecutive
                       N-hour block. Ideal for appliances that must run uninterrupted (dishwasher, oven).
-                    
+
                     Use this to answer: "When should I run my washing machine/EV charger today?"
                     """
     )
@@ -144,7 +144,7 @@ public class PriceController {
                         .withOffsetSameInstant(java.time.ZoneOffset.UTC);
                 java.time.OffsetDateTime to = from.plusDays(1);
 
-                // Re-use cheapest (n=1) to validate data availability then fetch via stats... 
+                // Re-use cheapest (n=1) to validate data availability then fetch via stats...
                 // Actually go direct to repo via stats won't return DTOs — we call priceService
                 // through today/tomorrow logic. For arbitrary date, add a package-private method.
                 result.put(zone, priceService.getPricesForDatePublic(zone, targetDate));

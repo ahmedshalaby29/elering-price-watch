@@ -2,7 +2,6 @@ package com.elering.pricewatch.service;
 
 import com.elering.pricewatch.domain.entity.AlertSubscription;
 import com.elering.pricewatch.domain.entity.HourlyPrice;
-import com.elering.pricewatch.domain.enums.AlertDirection;
 import com.elering.pricewatch.domain.enums.Zone;
 import com.elering.pricewatch.repository.AlertSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

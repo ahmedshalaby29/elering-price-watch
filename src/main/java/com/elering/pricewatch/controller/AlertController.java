@@ -35,7 +35,7 @@ public class AlertController {
                     Registers a new price-alert subscription. When the scheduled price fetch detects
                     hourly prices crossing the configured threshold, a notification is dispatched
                     via the chosen channel (EMAIL / WEBHOOK / TELEGRAM).
-                    
+
                     Channel-specific required fields:
                     - EMAIL: `email` must be provided
                     - WEBHOOK: `webhookUrl` must be provided

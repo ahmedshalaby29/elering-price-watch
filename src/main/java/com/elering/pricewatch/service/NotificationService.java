@@ -2,7 +2,6 @@ package com.elering.pricewatch.service;
 
 import com.elering.pricewatch.domain.entity.AlertSubscription;
 import com.elering.pricewatch.domain.entity.HourlyPrice;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +35,7 @@ public class NotificationService {
     private final JavaMailSender mailSender;
     private final RestClient restClient;
 
-    public NotificationService(JavaMailSender mailSender, 
+    public NotificationService(JavaMailSender mailSender,
                                @Qualifier("notificationRestClient") RestClient restClient) {
         this.mailSender = mailSender;
         this.restClient = restClient;

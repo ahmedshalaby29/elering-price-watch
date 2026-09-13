@@ -37,15 +37,21 @@ public interface AlertSubscriptionMapper {
 
     @Named("maskEmail")
     default String maskEmail(String email) {
-        if (email == null || email.isBlank()) return null;
+        if (email == null || email.isBlank()) {
+            return null;
+        }
         int atIdx = email.indexOf('@');
-        if (atIdx <= 1) return "***" + email.substring(atIdx);
+        if (atIdx <= 1) {
+            return "***" + email.substring(atIdx);
+        }
         return email.charAt(0) + "***" + email.substring(atIdx);
     }
 
     @Named("maskUrl")
     default String maskUrl(String url) {
-        if (url == null || url.isBlank()) return null;
+        if (url == null || url.isBlank()) {
+            return null;
+        }
         // Show just the scheme + host, hide the path
         try {
             var uri = java.net.URI.create(url);
@@ -57,8 +63,12 @@ public interface AlertSubscriptionMapper {
 
     @Named("maskId")
     default String maskId(String id) {
-        if (id == null || id.isBlank()) return null;
-        if (id.length() <= 3) return "***";
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        if (id.length() <= 3) {
+            return "***";
+        }
         return id.substring(0, 3) + "***";
     }
 }

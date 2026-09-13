@@ -3,7 +3,6 @@ package com.elering.pricewatch.client;
 import com.elering.pricewatch.domain.enums.Zone;
 import com.elering.pricewatch.exception.EleringApiException;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;

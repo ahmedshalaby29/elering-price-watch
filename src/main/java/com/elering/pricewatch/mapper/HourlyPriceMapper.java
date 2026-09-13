@@ -30,7 +30,9 @@ public interface HourlyPriceMapper {
 
     @Named("toLocalHourLabel")
     default String toLocalHourLabel(OffsetDateTime hourStart) {
-        if (hourStart == null) return null;
+        if (hourStart == null) {
+            return null;
+        }
         var local = hourStart.atZoneSameInstant(TALLINN_TZ);
         var end = local.plusHours(1);
         return local.format(HOUR_FMT) + "–" + end.format(HOUR_FMT);

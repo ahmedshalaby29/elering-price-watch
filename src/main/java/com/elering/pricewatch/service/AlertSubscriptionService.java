@@ -1,7 +1,6 @@
 package com.elering.pricewatch.service;
 
 import com.elering.pricewatch.domain.entity.AlertSubscription;
-import com.elering.pricewatch.domain.enums.NotificationChannel;
 import com.elering.pricewatch.dto.request.AlertSubscriptionRequest;
 import com.elering.pricewatch.dto.response.AlertSubscriptionDto;
 import com.elering.pricewatch.exception.PriceNotFoundException;
