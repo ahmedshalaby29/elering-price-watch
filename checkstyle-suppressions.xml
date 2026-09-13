@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionList Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<suppressions>
+    <!-- Suppress MissingJavadocMethod for generated code patterns -->
+    <suppress checks="MissingJavadocMethod" files=".*Mapper.*\.java"/>
+    <suppress checks="MissingJavadocType" files=".*\.java"/>
+    <suppress checks="JavadocVariable" files=".*\.java"/>
+</suppressions>
