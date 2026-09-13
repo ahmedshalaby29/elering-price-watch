@@ -79,7 +79,7 @@ class PriceFetchSchedulerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("fetchAndPersist writes 24 records per zone to Postgres")
     void fetchAndPersistWrites24RecordsPerZone() {
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2024, 1, 15);
         List<HourlyPrice> result = priceFetchService.fetchAndPersist(date);
 
         // EE + FI = 48 records (24 each, since zones=EE,FI in test config)
@@ -90,7 +90,7 @@ class PriceFetchSchedulerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("fetchAndPersist is idempotent — running twice doesn't duplicate records")
     void fetchAndPersistIsIdempotent() {
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2024, 1, 15);
 
         priceFetchService.fetchAndPersist(date);
         priceFetchService.fetchAndPersist(date); // second call should upsert
@@ -101,7 +101,7 @@ class PriceFetchSchedulerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("fetchAndPersist records have correct zone and price values")
     void fetchAndPersistRecordsHaveCorrectZone() {
-        LocalDate date = LocalDate.of(2025, 1, 15);
+        LocalDate date = LocalDate.of(2024, 1, 15);
         priceFetchService.fetchAndPersist(date);
 
         List<HourlyPrice> eePrices = priceRepository
@@ -138,7 +138,7 @@ class PriceFetchSchedulerIT extends AbstractIntegrationTest {
 
         // Should not throw — EE failure is isolated
         assertThatNoException().isThrownBy(() ->
-                priceFetchService.fetchAndPersist(LocalDate.of(2025, 1, 15)));
+                priceFetchService.fetchAndPersist(LocalDate.of(2024, 1, 15)));
 
         // FI records still persisted despite EE failure
         assertThat(priceRepository.count()).isEqualTo(24);

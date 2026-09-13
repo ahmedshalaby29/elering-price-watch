@@ -121,9 +121,12 @@ class PriceControllerIT extends AbstractIntegrationTest {
     @Test
     @DisplayName("GET /api/prices/stats returns correct min/max over range")
     void getStatsReturnsCorrectAggregates() {
+        String todayStr = java.time.LocalDate.now(ZoneId.of("Europe/Tallinn")).toString();
+        String tomorrowStr = java.time.LocalDate.now(ZoneId.of("Europe/Tallinn")).plusDays(1).toString();
+        
         ResponseEntity<PriceStatsDto> response = restTemplate.exchange(
                 baseUrl() + "/api/prices/stats?zone=EE" +
-                "&from=2025-01-15T00:00:00Z&to=2025-01-16T00:00:00Z",
+                "&from=" + todayStr + "T00:00:00Z&to=" + tomorrowStr + "T00:00:00Z",
                 HttpMethod.GET,
                 null,
                 PriceStatsDto.class
